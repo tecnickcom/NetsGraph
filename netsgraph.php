@@ -2,8 +2,8 @@
 //=============================================================================+
 // File name   : netsgraph.php
 // Begin       : 2012-04-18
-// Last Update : 2012-04-24
-// Version     : 1.0.000
+// Last Update : 2012-04-25
+// Version     : 1.0.001
 //
 // Website     : https://github.com/fubralimited/NetsGraph
 //
@@ -102,6 +102,12 @@ class NetsGraph {
 	 * @protected
 	 */
 	protected $print_stats;
+
+	/**
+	 * If true print statistics in the same unit used on the graph (otherwise bps).
+	 * @protected
+	 */
+	protected $stats_unit_prefix;
 
 	/**
 	 * background color for statistics.
@@ -589,36 +595,11 @@ class NetsGraph {
 		$this->numpoints = $this->stats['numsamples'];
 		// maximum value
 		$this->maxvalue = $this->stats['maximum'];
-		// set prefix multiplier and divider to represent data in a compact way
-		$numdigits = floor(log($this->maxvalue, 10));
-		if ($numdigits < 3) {
-			$this->unit_divider = 1;
-			$this->unit_prefix = '';
-		} elseif ($numdigits < 6) {
-			// kilo 10^3
-			$this->unit_divider = 1000;
-			$this->unit_prefix = 'k';
-		} elseif ($numdigits < 9) {
-			// mega 10^6
-			$this->unit_divider = 1000000;
-			$this->unit_prefix = 'M';
-		} elseif ($numdigits < 12) {
-			// giga 10^9
-			$this->unit_divider = 1000000000;
-			$this->unit_prefix = 'G';
-		} elseif ($numdigits < 15) {
-			// tera 10^12
-			$this->unit_divider = 1000000000000;
-			$this->unit_prefix = 'T';
-		} elseif ($numdigits < 18) {
-			// peta 10^15
-			$this->unit_divider = 1000000000000000;
-			$this->unit_prefix = 'P';
-		} elseif ($numdigits < 21) {
-			// exa 10^18
-			$this->unit_divider = 1000000000000000000;
-			$this->unit_prefix = 'E';
-		}
+		
+		$unit_data = $this->getUnitValues($this->maxvalue);
+		$this->unit_divider = $unit_data['unit_divider'];
+		$this->unit_prefix = $unit_data['unit_prefix'];
+
 		// calculate maximum grid value in bps
 		$maxunit = round($this->maxvalue / $this->unit_divider);
 		$divider = pow(10, (floor(log($maxunit, 10)) - 1));
@@ -640,6 +621,46 @@ class NetsGraph {
 		$this->vstep = ($vstep * $this->unit_divider);
 		// maximum value on the grid
 		$this->max_y_grid = (($vstep * ceil($maxgy / $vstep)) * $this->unit_divider);
+	}
+
+	/**
+	 * Get the multiplier and unit prefix for a given number
+	 * @param $number (float) Number to process.
+	 * @return (array) Array containing the unit divider and unit multiplier.
+ 	 * @protected
+	 */
+	protected function getUnitValues($number) {
+		$unit = array('unit_divider' => 1, 'unit_prefix' => '');
+		$numdigits = floor(log($number, 10));
+		if ($numdigits < 3) {
+			$unit['unit_divider'] = 1;
+			$unit['unit_prefix'] = '';
+		} elseif ($numdigits < 6) {
+			// kilo 10^3
+			$unit['unit_divider'] = 1000;
+			$unit['unit_prefix'] = 'k';
+		} elseif ($numdigits < 9) {
+			// mega 10^6
+			$unit['unit_divider'] = 1000000;
+			$unit['unit_prefix'] = 'M';
+		} elseif ($numdigits < 12) {
+			// giga 10^9
+			$unit['unit_divider'] = 1000000000;
+			$unit['unit_prefix'] = 'G';
+		} elseif ($numdigits < 15) {
+			// tera 10^12
+			$unit['unit_divider'] = 1000000000000;
+			$unit['unit_prefix'] = 'T';
+		} elseif ($numdigits < 18) {
+			// peta 10^15
+			$unit['unit_divider'] = 1000000000000000;
+			$unit['unit_prefix'] = 'P';
+		} elseif ($numdigits < 21) {
+			// exa 10^18
+			$unit['unit_divider'] = 1000000000000000000;
+			$unit['unit_prefix'] = 'E';
+		}
+		return $unit;
 	}
 
 	/**
@@ -678,7 +699,7 @@ class NetsGraph {
 		$stats['maximum'] = $this->ordered_data[($stats['numsamples'] - 1)];
 		// range
 		$stats['range'] = ($stats['maximum'] - $stats['minimum']);
-		// sum of all elements
+		// sum of all samples
 		$stats['sum'] = array_sum($this->ordered_data);
 		// mean or average value
 		$stats['mean'] = ($stats['sum'] / $stats['numsamples']);
@@ -689,6 +710,20 @@ class NetsGraph {
 			$stats['median'] = $this->ordered_data[(($stats['numsamples'] - 1) / 2)];
 		}
 		$datastr = array();
+		// total data transfer
+		$stats['data_transfer'] = 0;
+		$prevtime = 0;
+		$timestamp = array_keys($this->time_data);
+		foreach ($this->time_data as $time => $value) {
+			if ($prevtime > 0) {
+				$stats['data_transfer'] += ($value * ($time - $prevtime));
+			} elseif (isset($timestamp[1])) {
+				// assume that the first interval is equal to the second one
+				$stats['data_transfer'] += ($value * ($timestamp[1] - $time));
+			}
+			$prevtime = $time;
+		}
+		$stats['data_transfer'] /= 8; // convert to bytes
 		// deviance
 		$dev = 0;
 		foreach ($this->ordered_data as $value) {
@@ -781,6 +816,11 @@ class NetsGraph {
 			$this->print_stats = $p['print_stats']?true:false;
 		} else {
 			$this->print_stats = true;
+		}
+		if (isset($p['stats_unit_prefix'])) {
+			$this->stats_unit_prefix = $p['stats_unit_prefix']?true:false;
+		} else {
+			$this->stats_unit_prefix = true;
 		}
 		if (isset($p['stats_bgcolor']) AND ($this->isValidColor($p['stats_bgcolor']))) {
 			$this->stats_bgcolor = strtolower($p['stats_bgcolor']);
@@ -1205,43 +1245,68 @@ class NetsGraph {
 
 		// print stats
 		if ($this->print_stats) {
-			$svg .= "\t".'<g xml:space="preserve" stroke-width="0" text-anchor="start" font-family="'.$this->stats_fontfamily.'" font-weight="'.$this->stats_fontweight.'" font-size="'.$this->stats_fontsize.'" fill="'.$this->stats_fontcolor.'">'."\n";
-
+			$svg .= "\t".'<g xml:space="preserve" stroke-width="0" font-family="'.$this->stats_fontfamily.'" font-weight="'.$this->stats_fontweight.'" font-size="'.$this->stats_fontsize.'" fill="'.$this->stats_fontcolor.'">'."\n";
+		
+			$ystep = ($this->stats_fontsize * 1.1);
+		
 			$x = $this->space_left + $this->stats_fontsize;
 			$y = $this->space_top + $this->stats_fontsize;
 
-			$svg .= '<rect x="'.$x.'" y="'.$y.'" width="'.(19 * $this->stats_fontsize).'" height="'.(14 * $this->stats_fontsize).'" stroke-width="0" fill="'.$this->stats_bgcolor.'" opacity="0.75"/>'."\n";
+		
+			if ($this->stats_unit_prefix) {
+				$udiv = $this->unit_divider;
+				$unit = ' '.$this->unit_prefix.'bps';
+				$dtunit = $this->getUnitValues($this->stats['data_transfer']);
+			} else {
+				$udiv = 1;
+				$unit = ' bps';
+				$dtunit = array(); // unit data for total data transfer
+				$dtunit['unit_divider'] = 1;
+				$dtunit['unit_prefix'] = '';
+			}
+		
+		
+
+		
+			// array of stats to print
+			$statdata = array(	
+				'  samples' => $this->formatStatNumber($this->stats['numsamples'], 1, '').str_pad('', strlen($unit), ' '),
+				' tot data' => $this->formatStatNumber($this->stats['data_transfer'], $dtunit['unit_divider'], ' '.$dtunit['unit_prefix'].'B  '),
+				'      sum' => $this->formatStatNumber($this->stats['sum'], $udiv, $unit),
+				'      min' => $this->formatStatNumber($this->stats['minimum'], $udiv, $unit),
+				'      max' => $this->formatStatNumber($this->stats['maximum'], $udiv, $unit),
+				'    range' => $this->formatStatNumber($this->stats['range'], $udiv, $unit),
+				'     mean' => $this->formatStatNumber($this->stats['mean'], $udiv, $unit),
+				'   median' => $this->formatStatNumber($this->stats['median'], $udiv, $unit),
+				'     mode' => $this->formatStatNumber($this->stats['mode'], $udiv, $unit),
+				'   stddev' => $this->formatStatNumber($this->stats['standard_deviation'], $udiv, $unit),
+				' skewness' => $this->formatStatNumber($this->stats['skewness'], 1, '', 3).str_pad('', strlen($unit), ' '),
+				' kurtosis' => $this->formatStatNumber($this->stats['kurtosis'], 1, '',3).str_pad('', strlen($unit), ' '));
+			if ($type == 'percentile') {
+				$statdata[sprintf('% 2d', $this->percentile_x).'th perc'] = $this->formatStatNumber($this->percentile_y, $udiv, $unit);
+			}
+		
+			// get the maximum length for value
+			$maxlen = 0;
+			foreach ($statdata as $value) {
+				$len = strlen($value);
+				if ($len > $maxlen) {
+					$maxlen = $len;
+				}
+			}
+		
+			$swidth = (((13 + $maxlen) / 1.5) * $this->stats_fontsize);
+			$vx = ($x + $swidth - $this->stats_fontsize);
+		
+			$svg .= '<rect x="'.$x.'" y="'.$y.'" width="'.$swidth.'" height="'.(15 * $ystep).'" stroke-width="0" fill="'.$this->stats_bgcolor.'" opacity="0.75"/>'."\n";
 
 			$x += $this->stats_fontsize;
 			$y += $this->stats_fontsize;
-
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'   samples: '.number_format($this->stats['numsamples']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'       min: '.number_format($this->stats['minimum']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'       max: '.number_format($this->stats['maximum']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'     range: '.number_format($this->stats['range']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'       sum: '.number_format($this->stats['sum']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'      mean: '.number_format($this->stats['mean']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'    median: '.number_format($this->stats['median']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'      mode: '.number_format($this->stats['mode']).'</text>'."\n";
-			//$y += $this->stats_fontsize;
-			//$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'  variance: '.number_format($this->stats['variance']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'   std dev: '.number_format($this->stats['standard_deviation']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'  skewness: '.sprintf('%.3F', $this->stats['skewness']).'</text>'."\n";
-			$y += $this->stats_fontsize;
-			$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.'  kurtosis: '.sprintf('%.3F', $this->stats['kurtosis']).'</text>'."\n";
-			if ($type == 'percentile') {
-				$y += $this->stats_fontsize;
-				$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'">'.' '.sprintf('% 2d', $this->percentile_x).'th perc: '.number_format($this->percentile_y).'</text>'."\n";
+		
+			foreach ($statdata as $label => $value) {
+				$y += $ystep;
+				$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'" text-anchor="start">'.$label.':</text>'."\n";
+				$svg .= "\t\t".'<text x="'.$vx.'" y="'.$y.'" text-anchor="end">'.$value.'</text>'."\n";
 			}
 
 			$svg .= "\t".'</g>'."\n";
@@ -1250,6 +1315,20 @@ class NetsGraph {
 		// close SVG graph
 		$svg .= '</svg>'."\n";
 		$this->svg = $svg;
+	}
+
+	/**
+	 * Format a number for statistic box.
+	 * @param $num (float) Number to format
+	 * @param $udiv (int) Unit multiplier.
+	 * @param $unit (string) Unit of measure to print.
+	 * @param $dec (int) Number of decimals.
+	 * @param $len (int) Output string lenght;
+	 * @return (string) formatted string
+ 	 * @protected
+	 */
+	protected function formatStatNumber($num, $udiv=1, $unit='', $dec=0, $len=24) {
+		return number_format(($num / $udiv), $dec, '.', ',').$unit;
 	}
 
 	/**

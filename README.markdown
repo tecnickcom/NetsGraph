@@ -3,9 +3,9 @@ NetsGraph - README
 
 + Name: NetsGraph
 
-+ Version: 1.0.000
++ Version: 1.0.001
 
-+ Release date: 2012-04-24
++ Release date: 2012-04-25
 
 + Author: Nicola Asuni
 
@@ -39,3 +39,10 @@ DESCRIPTION:
 NetsGraph is a PHP class to generate SVG graphs and statistics from network data.
 Check the example and source code for further information.
 
+
+EXAMPLES:
+--------
+
+![Percentile graph example](example_percentile.svg)
+
+![Time graph example](example_time.svg)

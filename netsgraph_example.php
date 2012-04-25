@@ -2,8 +2,8 @@
 //=============================================================================+
 // File name   : netsgraph_example.php
 // Begin       : 2012-04-20
-// Last Update : 2012-04-24
-// Version     : 1.0.000
+// Last Update : 2012-04-25
+// Version     : 1.0.001
 //
 // Website     : https://github.com/fubralimited/NetsGraph
 //
@@ -86,12 +86,13 @@ $p = array();
 $p['graph_type'] = 'percentile'; // 'time' or 'percentile'
 //$p['label_x'] = 'Percentile [%]';
 //$p['label_y'] = 'Network Data Rate [Mbps]';
-$p['graph_width'] = 1024;
-//$p['graph_height'] = 768;
+$p['graph_width'] = 800;
+//$p['graph_height'] = 450;
 $p['background_color'] = 'none';
 $p['border_width'] = 0;
 $p['border_color'] = 'none';
 $p['print_stats'] = true;
+$p['stats_unit_prefix'] = true;
 $p['stats_bgcolor'] = '#ffffee';
 $p['stats_fontfamily'] = 'monospace';
 $p['stats_fontweight'] = 'normal';

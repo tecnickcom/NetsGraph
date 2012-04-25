@@ -1,3 +1,7 @@
+1.0.001 (2012-04-25)
+	- Units were added on printed statistics.
+	- total data transfer was added on statistics.
+
 1.0.000 (2012-04-24)
 	- First version on GIT.
 

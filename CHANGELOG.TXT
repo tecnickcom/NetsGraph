@@ -1,3 +1,7 @@
+1.0.002 (2012-04-26)
+	- Display of statistics were improved.
+	- Non visible point were removed to reduce file size.
+
 1.0.001 (2012-04-25)
 	- Units were added on printed statistics.
 	- total data transfer was added on statistics.

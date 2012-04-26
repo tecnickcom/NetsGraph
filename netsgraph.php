@@ -2,8 +2,8 @@
 //=============================================================================+
 // File name   : netsgraph.php
 // Begin       : 2012-04-18
-// Last Update : 2012-04-25
-// Version     : 1.0.001
+// Last Update : 2012-04-26
+// Version     : 1.0.002
 //
 // Website     : https://github.com/fubralimited/NetsGraph
 //
@@ -507,6 +507,12 @@ class NetsGraph {
 	 */
 	protected $stats = array();
 
+	/**
+	 * Store total data transfer for the selected interval time.
+	 * @protected
+	 */
+	protected $total_data_transfer = 0;
+
 	// --- CONSTANTS ---
 
 	/**
@@ -542,6 +548,7 @@ class NetsGraph {
  	 * @public
 	 */
 	public function parseNetData($data) {
+		$this->total_data_transfer = 0;
 		if (isset($data[0]) AND (is_array($data[0]))) {
 			// format (a) - raw data
 			$num_streams = count($data);
@@ -572,6 +579,7 @@ class NetsGraph {
 						} else {
 							$tmpval = ($counter + ($this->max32 - $precounter));
 						}
+						$this->total_data_transfer += $tmpval;
 						// convert to bit per seconds (from bytes per minute)
 						if (!isset($this->time_data[$timestamp])) {
 							$this->time_data[$timestamp] = 0;
@@ -710,20 +718,26 @@ class NetsGraph {
 			$stats['median'] = $this->ordered_data[(($stats['numsamples'] - 1) / 2)];
 		}
 		$datastr = array();
-		// total data transfer
-		$stats['data_transfer'] = 0;
-		$prevtime = 0;
-		$timestamp = array_keys($this->time_data);
-		foreach ($this->time_data as $time => $value) {
-			if ($prevtime > 0) {
-				$stats['data_transfer'] += ($value * ($time - $prevtime));
-			} elseif (isset($timestamp[1])) {
-				// assume that the first interval is equal to the second one
-				$stats['data_transfer'] += ($value * ($timestamp[1] - $time));
+		
+		if (isset($this->total_data_transfer)) {
+			$stats['data_transfer'] = $this->total_data_transfer;
+		} else {
+			// total data transfer
+			$stats['data_transfer'] = 0;
+			$prevtime = 0;
+			$timestamp = array_keys($this->time_data);
+			foreach ($this->time_data as $time => $value) {
+				if ($prevtime > 0) {
+					$stats['data_transfer'] += ($value * ($time - $prevtime));
+				} elseif (isset($timestamp[1])) {
+					// assume that the first interval is equal to the second one
+					$stats['data_transfer'] += ($value * ($timestamp[1] - $time));
+				}
+				$prevtime = $time;
 			}
-			$prevtime = $time;
+			$stats['data_transfer'] /= 8; // convert to bytes
 		}
-		$stats['data_transfer'] /= 8; // convert to bytes
+
 		// deviance
 		$dev = 0;
 		foreach ($this->ordered_data as $value) {
@@ -1117,10 +1131,17 @@ class NetsGraph {
 			$svg .= '</g>'."\n";
 
 			// calculate graph coordinates
+			$xp = -1;
+			$yp = -1;
 			foreach ($this->ordered_data as $key => $val) {
 				$x = sprintf('%.6F', (($key * $this->ratio_horiz) + $this->space_left));
 				$y = sprintf('%.6F', ((($this->max_y_grid - $val) * $this->ratio_vert) + $this->space_top));
-				$coords .= ' '.$x.','.$y.'';
+				// exclude points that are too close
+				if ((abs($x - $xp) >= 0.5) OR (abs($y - $yp) >= 0.5)) {
+					$coords .= ' '.$x.','.$y.'';
+					$xp = $x;
+					$yp = $y;
+				}
 			}
 
 		} else { // time graph
@@ -1175,10 +1196,17 @@ class NetsGraph {
 			$svg .= '</g>'."\n";
 
 			// calculate graph coordinates
+			$xp = -1;
+			$yp = -1;
 			foreach ($this->time_data as $time => $val) {
 				$x = sprintf('%.6F', ($this->space_left + (($time - $start_time) * $xratio)));
 				$y = sprintf('%.6F', ((($this->max_y_grid - $val) * $this->ratio_vert) + $this->space_top));
-				$coords .= ' '.$x.','.$y.'';
+				// exclude points that are too close
+				if ((abs($x - $xp) >= 0.5) OR (abs($y - $yp) >= 0.5)) {
+					$coords .= ' '.$x.','.$y.'';
+					$xp = $x;
+					$yp = $y;
+				}
 			}
 
 		}
@@ -1252,38 +1280,22 @@ class NetsGraph {
 			$x = $this->space_left + $this->stats_fontsize;
 			$y = $this->space_top + $this->stats_fontsize;
 
-		
-			if ($this->stats_unit_prefix) {
-				$udiv = $this->unit_divider;
-				$unit = ' '.$this->unit_prefix.'bps';
-				$dtunit = $this->getUnitValues($this->stats['data_transfer']);
-			} else {
-				$udiv = 1;
-				$unit = ' bps';
-				$dtunit = array(); // unit data for total data transfer
-				$dtunit['unit_divider'] = 1;
-				$dtunit['unit_prefix'] = '';
-			}
-		
-		
-
-		
 			// array of stats to print
 			$statdata = array(	
-				'  samples' => $this->formatStatNumber($this->stats['numsamples'], 1, '').str_pad('', strlen($unit), ' '),
-				' tot data' => $this->formatStatNumber($this->stats['data_transfer'], $dtunit['unit_divider'], ' '.$dtunit['unit_prefix'].'B  '),
-				'      sum' => $this->formatStatNumber($this->stats['sum'], $udiv, $unit),
-				'      min' => $this->formatStatNumber($this->stats['minimum'], $udiv, $unit),
-				'      max' => $this->formatStatNumber($this->stats['maximum'], $udiv, $unit),
-				'    range' => $this->formatStatNumber($this->stats['range'], $udiv, $unit),
-				'     mean' => $this->formatStatNumber($this->stats['mean'], $udiv, $unit),
-				'   median' => $this->formatStatNumber($this->stats['median'], $udiv, $unit),
-				'     mode' => $this->formatStatNumber($this->stats['mode'], $udiv, $unit),
-				'   stddev' => $this->formatStatNumber($this->stats['standard_deviation'], $udiv, $unit),
-				' skewness' => $this->formatStatNumber($this->stats['skewness'], 1, '', 3).str_pad('', strlen($unit), ' '),
-				' kurtosis' => $this->formatStatNumber($this->stats['kurtosis'], 1, '',3).str_pad('', strlen($unit), ' '));
+				'  samples' => $this->formatStatNumber($this->stats['numsamples'], 0, '', (3 + intval($this->stats_unit_prefix)), false),
+				' tot data' => $this->formatStatNumber($this->stats['data_transfer'], 3, 'B', 2, $this->stats_unit_prefix),
+				'      sum' => $this->formatStatNumber($this->stats['sum'], 3, 'bps', 0, $this->stats_unit_prefix),
+				'      min' => $this->formatStatNumber($this->stats['minimum'], 3, 'bps', 0, $this->stats_unit_prefix),
+				'      max' => $this->formatStatNumber($this->stats['maximum'], 3, 'bps', 0, $this->stats_unit_prefix),
+				'    range' => $this->formatStatNumber($this->stats['range'], 3, 'bps', 0, $this->stats_unit_prefix),
+				'     mean' => $this->formatStatNumber($this->stats['mean'], 3, 'bps', 0, $this->stats_unit_prefix),
+				'   median' => $this->formatStatNumber($this->stats['median'], 3, 'bps', 0, $this->stats_unit_prefix),
+				'     mode' => $this->formatStatNumber($this->stats['mode'], 3, 'bps', 0, $this->stats_unit_prefix),
+				'   stddev' => $this->formatStatNumber($this->stats['standard_deviation'], 3, 'bps', 0, $this->stats_unit_prefix),
+				' skewness' => $this->formatStatNumber($this->stats['skewness'], 3, '', (3 + intval($this->stats_unit_prefix)), true),
+				' kurtosis' => $this->formatStatNumber($this->stats['kurtosis'], 3, '', (3 + intval($this->stats_unit_prefix)), true));
 			if ($type == 'percentile') {
-				$statdata[sprintf('% 2d', $this->percentile_x).'th perc'] = $this->formatStatNumber($this->percentile_y, $udiv, $unit);
+				$statdata[sprintf('% 2d', $this->percentile_x).'th perc'] = $this->formatStatNumber($this->percentile_y, 3, 'bps', 0, $this->stats_unit_prefix);
 			}
 		
 			// get the maximum length for value
@@ -1320,15 +1332,25 @@ class NetsGraph {
 	/**
 	 * Format a number for statistic box.
 	 * @param $num (float) Number to format
-	 * @param $udiv (int) Unit multiplier.
-	 * @param $unit (string) Unit of measure to print.
-	 * @param $dec (int) Number of decimals.
-	 * @param $len (int) Output string lenght;
+	 * @param $dec (int) Number of decimals when using unit multiplier.
+	 * @param $baseunit (string) Basic unit of measure.
+	 * @param $rspace (int) NUmber of spaces to print on the right side (for vertical alignment).
+	 * @param $umult (boolean) If true prints unit multiple prefix.
 	 * @return (string) formatted string
  	 * @protected
 	 */
-	protected function formatStatNumber($num, $udiv=1, $unit='', $dec=0, $len=24) {
-		return number_format(($num / $udiv), $dec, '.', ',').$unit;
+	protected function formatStatNumber($num, $dec=0, $baseunit='', $rspace='', $umult=false) {
+		if ($umult AND $this->stats_unit_prefix) {
+			$unitdata = $this->getUnitValues($num);
+		} else {
+			$unitdata = array();
+			$unitdata['unit_divider'] = 1;
+			$unitdata['unit_prefix'] = '';
+			if (!$umult) {
+				$dec=0;
+			}
+		}
+		return number_format(($num / $unitdata['unit_divider']), $dec, '.', ',').' '.$unitdata['unit_prefix'].$baseunit.str_repeat(' ', $rspace);
 	}
 
 	/**

@@ -2,8 +2,8 @@
 //=============================================================================+
 // File name   : netsgraph.php
 // Begin       : 2012-04-18
-// Last Update : 2012-04-26
-// Version     : 1.0.002
+// Last Update : 2012-04-27
+// Version     : 1.0.003
 //
 // Website     : https://github.com/fubralimited/NetsGraph
 //
@@ -536,6 +536,11 @@ class NetsGraph {
 	 * @see parseNetData()
 	 */
 	public function __construct($data, $params=array()) {
+		if (isset($p['percentile_x'])) {
+			$this->percentile_x = max(0, min(100, intval($p['percentile_x'])));
+		} else {
+			$this->percentile_x = 95;
+		}
 		$this->parseNetData($data);
 		$this->parseParams($params);
 		$this->createSVG($this->graph_type);
@@ -597,13 +602,14 @@ class NetsGraph {
 		// ordered data
 		$this->ordered_data = $this->time_data;
 		sort($this->ordered_data, SORT_NUMERIC);
+		// count number of data items
+		$this->numpoints = count($this->ordered_data);
+		// calculate percentile value
+		$this->calculatePercentileValue();
 		// calculate statistics
 		$this->calculateStatistics();
-		// count number of data items
-		$this->numpoints = $this->stats['numsamples'];
 		// maximum value
 		$this->maxvalue = $this->stats['maximum'];
-		
 		$unit_data = $this->getUnitValues($this->maxvalue);
 		$this->unit_divider = $unit_data['unit_divider'];
 		$this->unit_prefix = $unit_data['unit_prefix'];
@@ -697,7 +703,7 @@ class NetsGraph {
 		// array to return
 		$stats = array('numsamples'=>0, 'minimum'=>'', 'maximum'=>'', 'range'=>'', 'sum'=>'', 'mean'=>'', 'median'=>'', 'mode'=>'', 'variance'=>'', 'standard_deviation'=>'', 'skewness'=>'', 'kurtosis'=>'');
 		// number of items
-		$stats['numsamples'] = count($this->ordered_data);
+		$stats['numsamples'] = $this->numpoints;
 		if ($stats['numsamples'] < 1) {
 			return $stats;
 		}
@@ -718,7 +724,7 @@ class NetsGraph {
 			$stats['median'] = $this->ordered_data[(($stats['numsamples'] - 1) / 2)];
 		}
 		$datastr = array();
-		
+
 		if (isset($this->total_data_transfer)) {
 			$stats['data_transfer'] = $this->total_data_transfer;
 		} else {
@@ -766,6 +772,18 @@ class NetsGraph {
 			$stats['skewness'] /= $stats['numsamples'];
 			$stats['kurtosis'] /= $stats['numsamples'];
 		}
+
+		// percentile stats
+		if (!isset($this->percentile_y)) {
+			$this->calculatePercentileValue();
+		}
+		$stats['percentile_x'] = $this->percentile_x;
+		$stats['percentile_y'] = $this->percentile_y;
+		$stats['perc_percentile_y_maximum'] = (100 * ($stats['percentile_y'] / $stats['maximum']));
+		$stats['perc_mean_percentile_y'] = (100 * ($stats['mean'] / $stats['percentile_y']));
+		$stats['perc_median_percentile_y'] = (100 * ($stats['median'] / $stats['percentile_y']));
+		$stats['perc_mode_percentile_y'] = (100 * ($stats['mode'] / $stats['percentile_y']));
+
 		$this->stats = $stats;
 	}
 
@@ -778,8 +796,6 @@ class NetsGraph {
 		if (empty($this->stats)) {
 			$this->calculateStatistics();
 		}
-		$this->stats['percentile_x'] = $this->percentile_x;
-		$this->stats['percentile_y'] = $this->percentile_y;
 		return $this->stats;
 	}
 
@@ -814,17 +830,17 @@ class NetsGraph {
 		if (isset($p['background_color']) AND ($this->isValidColor($p['background_color']))) {
 			$this->background_color = strtolower($p['background_color']);
 		} else {
-			$this->background_color = 'none';
+			$this->background_color = '#ffffff';
 		}
 		if (isset($p['border_width'])) {
 			$this->border_width = abs(floatval($p['border_width']));
 		} else {
-			$this->border_width = 0;
+			$this->border_width = 1;
 		}
 		if (isset($p['border_color'])) {
 			$this->border_color = strtolower($p['border_color']);
 		} else {
-			$this->border_color = 'none';
+			$this->border_color = '#000000';
 		}
 		if (isset($p['print_stats'])) {
 			$this->print_stats = $p['print_stats']?true:false;
@@ -1085,14 +1101,12 @@ class NetsGraph {
 		$this->grid_width = ($this->graph_width - $this->space_left - $this->space_right);
 		$this->ratio_horiz = ($this->grid_width / ($this->numpoints - 1));
 		if (isset($p['graph_height'])) {
-			$this->graph_height = max(($this->space_top + $this->space_bottom + (16 * $this->stats_fontsize)), abs(intval($p['graph_height'])));
+			$this->graph_height = max(($this->space_top + $this->space_bottom + (19 * $this->stats_fontsize * 1.1)), abs(intval($p['graph_height'])));
 		} else {
 			$this->graph_height = ($this->space_top + $this->space_bottom + round($this->grid_width * (9 / 16)));
 		}
 		$this->grid_height = ($this->graph_height - $this->space_top - $this->space_bottom);
 		$this->ratio_vert = ($this->grid_height / $this->max_y_grid);
-		// calculate the percentile value
-		$this->calculatePercentileValue();
 	}
 
 	/**
@@ -1109,7 +1123,7 @@ class NetsGraph {
 
 		// background
 		if (($this->background_color != 'none') OR ($this->border_width > 0)) {
-			$svg .= '<rect x="0" y="0" width="'.$this->graph_width.'" height="'.$this->graph_height.'" stroke-width="'.$this->border_width.'" color="'.$this->border_color.'" fill="'.$this->background_color.'" />'."\n";
+			$svg .= '<rect x="0" y="0" width="'.$this->graph_width.'" height="'.$this->graph_height.'" stroke-width="'.$this->border_width.'" stroke="'.$this->border_color.'" fill="'.$this->background_color.'" />'."\n";
 		}
 
 		// graph coordinates
@@ -1268,20 +1282,20 @@ class NetsGraph {
 
 		// y axis label
 		if (!empty($this->label_y)) {
-			$svg .= "\t".'<text font-family="'.$this->label_y_fontfamily.'" font-weight="'.$this->label_y_fontweight.'" font-size="'.$this->label_y_fontsize.'" fill="'.$this->label_y_fontcolor.'" text-anchor="middle" x="0" y="0" stroke-width="0" transform="rotate(-90),translate('.($this->space_top - ($this->graph_height / 2)).', '.(2 * $this->label_y_fontsize).')">'.$this->label_y.'</text>'."\n";
+			$svg .= "\t".'<text font-family="'.$this->label_y_fontfamily.'" font-weight="'.$this->label_y_fontweight.'" font-size="'.$this->label_y_fontsize.'" fill="'.$this->label_y_fontcolor.'" text-anchor="middle" y="'.(1.5 * $this->label_y_fontsize).'" x="-'.($this->space_top + ($this->grid_height / 2)).'" transform="matrix(0,-1,1,0,0,0)" stroke-width="0" >'.$this->label_y.'</text>'."\n";
 		}
 
 		// print stats
 		if ($this->print_stats) {
 			$svg .= "\t".'<g xml:space="preserve" stroke-width="0" font-family="'.$this->stats_fontfamily.'" font-weight="'.$this->stats_fontweight.'" font-size="'.$this->stats_fontsize.'" fill="'.$this->stats_fontcolor.'">'."\n";
-		
+
 			$ystep = ($this->stats_fontsize * 1.1);
-		
+
 			$x = $this->space_left + $this->stats_fontsize;
 			$y = $this->space_top + $this->stats_fontsize;
 
 			// array of stats to print
-			$statdata = array(	
+			$statdata = array(
 				'  samples' => $this->formatStatNumber($this->stats['numsamples'], 0, '', (3 + intval($this->stats_unit_prefix)), false),
 				' tot data' => $this->formatStatNumber($this->stats['data_transfer'], 3, 'B', 2, $this->stats_unit_prefix),
 				'      sum' => $this->formatStatNumber($this->stats['sum'], 3, 'bps', 0, $this->stats_unit_prefix),
@@ -1294,10 +1308,16 @@ class NetsGraph {
 				'   stddev' => $this->formatStatNumber($this->stats['standard_deviation'], 3, 'bps', 0, $this->stats_unit_prefix),
 				' skewness' => $this->formatStatNumber($this->stats['skewness'], 3, '', (3 + intval($this->stats_unit_prefix)), true),
 				' kurtosis' => $this->formatStatNumber($this->stats['kurtosis'], 3, '', (3 + intval($this->stats_unit_prefix)), true));
+			$h = (14 * $ystep);
 			if ($type == 'percentile') {
-				$statdata[sprintf('% 2d', $this->percentile_x).'th perc'] = $this->formatStatNumber($this->percentile_y, 3, 'bps', 0, $this->stats_unit_prefix);
+				$statdata[sprintf(' % 2d', $this->percentile_x).'th prc'] = $this->formatStatNumber($this->percentile_y, 3, 'bps', 0, $this->stats_unit_prefix);
+				$statdata['  prc/max'] = $this->formatStatNumber($this->stats['perc_percentile_y_maximum'], 3, '%', (2 + intval($this->stats_unit_prefix)), true);
+				$statdata[' mean/prc'] = $this->formatStatNumber($this->stats['perc_mean_percentile_y'], 3, '%', (2 + intval($this->stats_unit_prefix)), true);
+				$statdata['  med/prc'] = $this->formatStatNumber($this->stats['perc_median_percentile_y'], 3, '%', (2 + intval($this->stats_unit_prefix)), true);
+				$statdata[' mode/prc'] = $this->formatStatNumber($this->stats['perc_mode_percentile_y'], 3, '%', (2 + intval($this->stats_unit_prefix)), true);
+				$h +=  (5 * $ystep);
 			}
-		
+
 			// get the maximum length for value
 			$maxlen = 0;
 			foreach ($statdata as $value) {
@@ -1306,15 +1326,15 @@ class NetsGraph {
 					$maxlen = $len;
 				}
 			}
-		
+
 			$swidth = (((13 + $maxlen) / 1.5) * $this->stats_fontsize);
 			$vx = ($x + $swidth - $this->stats_fontsize);
-		
-			$svg .= '<rect x="'.$x.'" y="'.$y.'" width="'.$swidth.'" height="'.(15 * $ystep).'" stroke-width="0" fill="'.$this->stats_bgcolor.'" opacity="0.75"/>'."\n";
+
+			$svg .= '<rect x="'.$x.'" y="'.$y.'" width="'.$swidth.'" height="'.$h.'" stroke-width="0" fill="'.$this->stats_bgcolor.'" opacity="0.75"/>'."\n";
 
 			$x += $this->stats_fontsize;
 			$y += $this->stats_fontsize;
-		
+
 			foreach ($statdata as $label => $value) {
 				$y += $ystep;
 				$svg .= "\t\t".'<text x="'.$x.'" y="'.$y.'" text-anchor="start">'.$label.':</text>'."\n";
@@ -1383,7 +1403,6 @@ class NetsGraph {
 
 	/**
 	 * Convert the SVG object to PNG and sent it to the output
-	 * ImagMagick BUG: it doesn't understand how to properly convert the vertical label rotation.
  	 * @public
 	 */
 	public function getPNG() {

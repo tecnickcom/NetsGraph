@@ -2,8 +2,8 @@
 //=============================================================================+
 // File name   : netsgraph_example.php
 // Begin       : 2012-04-20
-// Last Update : 2012-04-26
-// Version     : 1.0.002
+// Last Update : 2012-04-27
+// Version     : 1.0.003
 //
 // Website     : https://github.com/fubralimited/NetsGraph
 //
@@ -88,9 +88,9 @@ $p['graph_type'] = 'percentile'; // 'time' or 'percentile'
 //$p['label_y'] = 'Network Data Rate [Mbps]';
 $p['graph_width'] = 800;
 //$p['graph_height'] = 450;
-$p['background_color'] = 'none';
-$p['border_width'] = 0;
-$p['border_color'] = 'none';
+$p['background_color'] = '#ffffff';
+$p['border_width'] = 1;
+$p['border_color'] = '#000000';
 $p['print_stats'] = true;
 $p['stats_unit_prefix'] = true;
 $p['stats_bgcolor'] = '#ffffee';
@@ -143,6 +143,9 @@ $svg = new NetsGraph($data, $p);
 
 // output SVG file (including headers)
 $svg->getSVG();
+
+// output PNG file (including headers)
+//$svg->getPNG();
 
 //=============================================================================+
 // END OF FILE

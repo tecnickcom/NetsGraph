@@ -2,8 +2,8 @@
 //=============================================================================+
 // File name   : netsgraph.php
 // Begin       : 2012-04-18
-// Last Update : 2012-04-27
-// Version     : 1.0.003
+// Last Update : 2012-05-10
+// Version     : 1.0.004
 //
 // Website     : https://github.com/fubralimited/NetsGraph
 //
@@ -54,7 +54,7 @@
  * @class NetsGraph
  * NetsGraph is a PHP class to generate SVG graphs and statistics from network data.
  * @package com.fubra.netsgraph
- * @version 1.1.000
+ * @version 1.0.004
  * @author Nicola Asuni
  */
 class NetsGraph {
@@ -104,7 +104,7 @@ class NetsGraph {
 	protected $print_stats;
 
 	/**
-	 * If true print statistics in the same unit used on the graph (otherwise bps).
+	 * If true print statistics in the same unit used on the graph (otherwise bit/s).
 	 * @protected
 	 */
 	protected $stats_unit_prefix;
@@ -430,7 +430,7 @@ class NetsGraph {
 	protected $unit_divider;
 
 	/**
-	 * Unit prefix for data unit of measure [bps].
+	 * Unit prefix for data unit of measure [bit/s].
 	 * @protected
 	 */
 	protected $unit_prefix = '';
@@ -614,7 +614,7 @@ class NetsGraph {
 		$this->unit_divider = $unit_data['unit_divider'];
 		$this->unit_prefix = $unit_data['unit_prefix'];
 
-		// calculate maximum grid value in bps
+		// calculate maximum grid value in bit/s
 		$maxunit = round($this->maxvalue / $this->unit_divider);
 		$divider = pow(10, (floor(log($maxunit, 10)) - 1));
 		$maxgy = (ceil($maxunit / $divider) * $divider);
@@ -971,7 +971,7 @@ class NetsGraph {
 		if (isset($p['label_y'])) {
 			$this->label_y = strtr($p['label_y'], array('"', '&quot;'));
 		} else {
-			$this->label_y = 'Network Data Rate ['.$this->unit_prefix.'bps]';
+			$this->label_y = 'Network Data Rate ['.$this->unit_prefix.'bit/s]';
 		}
 		if (isset($p['label_y_fontfamily'])) {
 			$this->label_y_fontfamily = preg_replace('/[^A-Za-z0-9\,]/', '', $p['label_y_fontfamily']);
@@ -1271,7 +1271,7 @@ class NetsGraph {
 
 			// percentile value
 			$x = sprintf('%.6F', ($this->space_left + ($this->percentile_x * $this->grid_width / 100)) - $this->percentile_gridy_fontsize);
-			$svg .= "\t".'<text font-family="'.$this->percentile_gridy_fontfamily.'" font-weight="'.$this->percentile_gridy_fontweight.'" font-size="'.$this->percentile_gridy_fontsize.'" fill="'.$this->percentile_gridy_fontcolor.'" text-anchor="end" x="'.$x.'" y="'.($y - $this->percentile_gridy_fontsize).'" stroke-width="0">~ '.round($this->percentile_y / $this->unit_divider).' '.$this->unit_prefix.'bps</text>'."\n";
+			$svg .= "\t".'<text font-family="'.$this->percentile_gridy_fontfamily.'" font-weight="'.$this->percentile_gridy_fontweight.'" font-size="'.$this->percentile_gridy_fontsize.'" fill="'.$this->percentile_gridy_fontcolor.'" text-anchor="end" x="'.$x.'" y="'.($y - $this->percentile_gridy_fontsize).'" stroke-width="0">~ '.round($this->percentile_y / $this->unit_divider).' '.$this->unit_prefix.'bit/s</text>'."\n";
 
 		}
 
@@ -1296,25 +1296,25 @@ class NetsGraph {
 
 			// array of stats to print
 			$statdata = array(
-				'  samples' => $this->formatStatNumber($this->stats['numsamples'], 0, '', (3 + intval($this->stats_unit_prefix)), false),
-				' tot data' => $this->formatStatNumber($this->stats['data_transfer'], 3, 'B', 2, $this->stats_unit_prefix),
-				'      sum' => $this->formatStatNumber($this->stats['sum'], 3, 'bps', 0, $this->stats_unit_prefix),
-				'      min' => $this->formatStatNumber($this->stats['minimum'], 3, 'bps', 0, $this->stats_unit_prefix),
-				'      max' => $this->formatStatNumber($this->stats['maximum'], 3, 'bps', 0, $this->stats_unit_prefix),
-				'    range' => $this->formatStatNumber($this->stats['range'], 3, 'bps', 0, $this->stats_unit_prefix),
-				'     mean' => $this->formatStatNumber($this->stats['mean'], 3, 'bps', 0, $this->stats_unit_prefix),
-				'   median' => $this->formatStatNumber($this->stats['median'], 3, 'bps', 0, $this->stats_unit_prefix),
-				'     mode' => $this->formatStatNumber($this->stats['mode'], 3, 'bps', 0, $this->stats_unit_prefix),
-				'   stddev' => $this->formatStatNumber($this->stats['standard_deviation'], 3, 'bps', 0, $this->stats_unit_prefix),
-				' skewness' => $this->formatStatNumber($this->stats['skewness'], 3, '', (3 + intval($this->stats_unit_prefix)), true),
-				' kurtosis' => $this->formatStatNumber($this->stats['kurtosis'], 3, '', (3 + intval($this->stats_unit_prefix)), true));
+				'  samples' => $this->formatStatNumber($this->stats['numsamples'], 0, '', (5 + intval($this->stats_unit_prefix)), false),
+				' tot data' => $this->formatStatNumber($this->stats['data_transfer'], 3, 'B', 4, $this->stats_unit_prefix),
+				'      sum' => $this->formatStatNumber($this->stats['sum'], 3, 'bit/s', 0, $this->stats_unit_prefix),
+				'      min' => $this->formatStatNumber($this->stats['minimum'], 3, 'bit/s', 0, $this->stats_unit_prefix),
+				'      max' => $this->formatStatNumber($this->stats['maximum'], 3, 'bit/s', 0, $this->stats_unit_prefix),
+				'    range' => $this->formatStatNumber($this->stats['range'], 3, 'bit/s', 0, $this->stats_unit_prefix),
+				'     mean' => $this->formatStatNumber($this->stats['mean'], 3, 'bit/s', 0, $this->stats_unit_prefix),
+				'   median' => $this->formatStatNumber($this->stats['median'], 3, 'bit/s', 0, $this->stats_unit_prefix),
+				'     mode' => $this->formatStatNumber($this->stats['mode'], 3, 'bit/s', 0, $this->stats_unit_prefix),
+				'   stddev' => $this->formatStatNumber($this->stats['standard_deviation'], 3, 'bit/s', 0, $this->stats_unit_prefix),
+				' skewness' => $this->formatStatNumber($this->stats['skewness'], 3, '', (5 + intval($this->stats_unit_prefix)), true),
+				' kurtosis' => $this->formatStatNumber($this->stats['kurtosis'], 3, '', (5 + intval($this->stats_unit_prefix)), true));
 			$h = (14 * $ystep);
 			if ($type == 'percentile') {
-				$statdata[sprintf(' % 2d', $this->percentile_x).'th prc'] = $this->formatStatNumber($this->percentile_y, 3, 'bps', 0, $this->stats_unit_prefix);
-				$statdata['  prc/max'] = $this->formatStatNumber($this->stats['perc_percentile_y_maximum'], 3, '%', (2 + intval($this->stats_unit_prefix)), true);
-				$statdata[' mean/prc'] = $this->formatStatNumber($this->stats['perc_mean_percentile_y'], 3, '%', (2 + intval($this->stats_unit_prefix)), true);
-				$statdata['  med/prc'] = $this->formatStatNumber($this->stats['perc_median_percentile_y'], 3, '%', (2 + intval($this->stats_unit_prefix)), true);
-				$statdata[' mode/prc'] = $this->formatStatNumber($this->stats['perc_mode_percentile_y'], 3, '%', (2 + intval($this->stats_unit_prefix)), true);
+				$statdata[sprintf(' % 2d', $this->percentile_x).'th prc'] = $this->formatStatNumber($this->percentile_y, 3, 'bit/s', 0, $this->stats_unit_prefix);
+				$statdata['  prc/max'] = $this->formatStatNumber($this->stats['perc_percentile_y_maximum'], 3, '%', (4 + intval($this->stats_unit_prefix)), true);
+				$statdata[' mean/prc'] = $this->formatStatNumber($this->stats['perc_mean_percentile_y'], 3, '%', (4 + intval($this->stats_unit_prefix)), true);
+				$statdata['  med/prc'] = $this->formatStatNumber($this->stats['perc_median_percentile_y'], 3, '%', (4 + intval($this->stats_unit_prefix)), true);
+				$statdata[' mode/prc'] = $this->formatStatNumber($this->stats['perc_mode_percentile_y'], 3, '%', (4 + intval($this->stats_unit_prefix)), true);
 				$h +=  (5 * $ystep);
 			}
 

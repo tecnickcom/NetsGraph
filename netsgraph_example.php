@@ -2,8 +2,8 @@
 //=============================================================================+
 // File name   : netsgraph_example.php
 // Begin       : 2012-04-20
-// Last Update : 2012-04-27
-// Version     : 1.0.003
+// Last Update : 2012-05-10
+// Version     : 1.0.004
 //
 // Website     : https://github.com/fubralimited/NetsGraph
 //

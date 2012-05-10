@@ -74,44 +74,44 @@
 <g stroke-width="1" stroke="#ff0000" text-anchor="middle" font-family="Arial,Verdana" font-weight="bold" font-size="14" fill="#b00000">
 	<line x1="84" y1="92.604671" x2="776" y2="92.604671" />
 </g>
-	<text font-family="Arial,Verdana" font-weight="bold" font-size="14" fill="#b00000" text-anchor="end" x="727.600000" y="78.604671" stroke-width="0">~ 158 Mbps</text>
+	<text font-family="Arial,Verdana" font-weight="bold" font-size="14" fill="#b00000" text-anchor="end" x="727.600000" y="78.604671" stroke-width="0">~ 158 Mbit/s</text>
 	<text font-family="Arial,Verdana" font-weight="normal" font-size="14" fill="#000000" text-anchor="middle" x="432" y="449" stroke-width="0">Percentile [%]</text>
-	<text font-family="Arial,Verdana" font-weight="normal" font-size="14" fill="#000000" text-anchor="middle" y="21" x="-205.5" transform="matrix(0,-1,1,0,0,0)" stroke-width="0" >Network Data Rate [Mbps]</text>
+	<text font-family="Arial,Verdana" font-weight="normal" font-size="14" fill="#000000" text-anchor="middle" y="21" x="-205.5" transform="matrix(0,-1,1,0,0,0)" stroke-width="0" >Network Data Rate [Mbit/s]</text>
 	<g xml:space="preserve" stroke-width="0" font-family="monospace" font-weight="normal" font-size="10" fill="#404040">
-<rect x="98" y="22" width="166.66666666667" height="209" stroke-width="0" fill="#ffffee" opacity="0.75"/>
+<rect x="98" y="22" width="180" height="209" stroke-width="0" fill="#ffffee" opacity="0.75"/>
 		<text x="108" y="43" text-anchor="start">  samples:</text>
-		<text x="254.66666666667" y="43" text-anchor="end">1,438     </text>
+		<text x="268" y="43" text-anchor="end">1,438       </text>
 		<text x="108" y="54" text-anchor="start"> tot data:</text>
-		<text x="254.66666666667" y="54" text-anchor="end">760.257 GB  </text>
+		<text x="268" y="54" text-anchor="end">760.257 GB    </text>
 		<text x="108" y="65" text-anchor="start">      sum:</text>
-		<text x="254.66666666667" y="65" text-anchor="end">101.372 Gbps</text>
+		<text x="268" y="65" text-anchor="end">101.372 Gbit/s</text>
 		<text x="108" y="76" text-anchor="start">      min:</text>
-		<text x="254.66666666667" y="76" text-anchor="end">2.071 Mbps</text>
+		<text x="268" y="76" text-anchor="end">2.071 Mbit/s</text>
 		<text x="108" y="87" text-anchor="start">      max:</text>
-		<text x="254.66666666667" y="87" text-anchor="end">183.131 Mbps</text>
+		<text x="268" y="87" text-anchor="end">183.131 Mbit/s</text>
 		<text x="108" y="98" text-anchor="start">    range:</text>
-		<text x="254.66666666667" y="98" text-anchor="end">181.060 Mbps</text>
+		<text x="268" y="98" text-anchor="end">181.060 Mbit/s</text>
 		<text x="108" y="109" text-anchor="start">     mean:</text>
-		<text x="254.66666666667" y="109" text-anchor="end">70.495 Mbps</text>
+		<text x="268" y="109" text-anchor="end">70.495 Mbit/s</text>
 		<text x="108" y="120" text-anchor="start">   median:</text>
-		<text x="254.66666666667" y="120" text-anchor="end">79.508 Mbps</text>
+		<text x="268" y="120" text-anchor="end">79.508 Mbit/s</text>
 		<text x="108" y="131" text-anchor="start">     mode:</text>
-		<text x="254.66666666667" y="131" text-anchor="end">5.520 Mbps</text>
+		<text x="268" y="131" text-anchor="end">5.520 Mbit/s</text>
 		<text x="108" y="142" text-anchor="start">   stddev:</text>
-		<text x="254.66666666667" y="142" text-anchor="end">51.904 Mbps</text>
+		<text x="268" y="142" text-anchor="end">51.904 Mbit/s</text>
 		<text x="108" y="153" text-anchor="start"> skewness:</text>
-		<text x="254.66666666667" y="153" text-anchor="end">0.173     </text>
+		<text x="268" y="153" text-anchor="end">0.173       </text>
 		<text x="108" y="164" text-anchor="start"> kurtosis:</text>
-		<text x="254.66666666667" y="164" text-anchor="end">1.815     </text>
+		<text x="268" y="164" text-anchor="end">1.815       </text>
 		<text x="108" y="175" text-anchor="start"> 95th prc:</text>
-		<text x="254.66666666667" y="175" text-anchor="end">158.344 Mbps</text>
+		<text x="268" y="175" text-anchor="end">158.344 Mbit/s</text>
 		<text x="108" y="186" text-anchor="start">  prc/max:</text>
-		<text x="254.66666666667" y="186" text-anchor="end">86.465 %   </text>
+		<text x="268" y="186" text-anchor="end">86.465 %     </text>
 		<text x="108" y="197" text-anchor="start"> mean/prc:</text>
-		<text x="254.66666666667" y="197" text-anchor="end">44.520 %   </text>
+		<text x="268" y="197" text-anchor="end">44.520 %     </text>
 		<text x="108" y="208" text-anchor="start">  med/prc:</text>
-		<text x="254.66666666667" y="208" text-anchor="end">50.212 %   </text>
+		<text x="268" y="208" text-anchor="end">50.212 %     </text>
 		<text x="108" y="219" text-anchor="start"> mode/prc:</text>
-		<text x="254.66666666667" y="219" text-anchor="end">3.486 %   </text>
+		<text x="268" y="219" text-anchor="end">3.486 %     </text>
 	</g>
 </svg>

@@ -1,3 +1,7 @@
+1.0.004 (2012-05-10)
+	- Units of measure were changed to conform SI standard.
+	- Documentation was improved.
+
 1.0.003 (2012-04-27)
 	- Additional statistics were added.
 	- Background colour was added by default.

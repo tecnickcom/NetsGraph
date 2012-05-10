@@ -11,14 +11,14 @@ NetsGraph - README
 
 + Copyright (2012-2012):
 
-> > Fubra Limited 
-> > Manor Coach House 
-> > Church Hill 
-> > Aldershot 
-> > Hampshire 
-> > GU12 4RQ 
-> > <http://www.fubra.com> 
-> > <support@fubra.com> 
+> > Fubra Limited  
+> > Manor Coach House  
+> > Church Hill  
+> > Aldershot  
+> > Hampshire  
+> > GU12 4RQ  
+> > <http://www.fubra.com>  
+> > <support@fubra.com>  
 
 
 SOFTWARE LICENSE:
